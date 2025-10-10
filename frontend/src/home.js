@@ -6,11 +6,11 @@ import Typography from "@material-ui/core/Typography";
 import Avatar from "@material-ui/core/Avatar";
 import Container from "@material-ui/core/Container";
 import cblogo from "./cblogo.PNG";
-import Image from "./bg.png";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
 import { Paper, CardActionArea, CardMedia, Grid, TableContainer, Table, TableBody, TableHead, TableRow, TableCell, Button, CircularProgress } from "@material-ui/core";
-import Clear from '@material-ui/icons/Clear';
+import { Clear, CloudUpload } from '@material-ui/icons';
+import axios from "axios";
 import { DropzoneArea } from 'material-ui-dropzone';
 
 const ColorButton = withStyles((theme) => ({
@@ -23,26 +23,46 @@ const ColorButton = withStyles((theme) => ({
   },
 }))(Button);
 
-const axios = require("axios").default;
-
 const useStyles = makeStyles((theme) => ({
   grow: {
     flexGrow: 1,
   },
   clearButton: {
-    width: "-webkit-fill-available",
-    borderRadius: "15px",
+    width: "100%",
+    borderRadius: "30px",
     padding: "15px 22px",
-    color: "#000000a6",
+    color: "#007bff",
     fontSize: "20px",
     fontWeight: 900,
+    boxShadow: "0 4px 15px rgba(0, 123, 255, 0.4)",
+    transition: "all 0.3s ease",
+    '&:hover': {
+      backgroundColor: "#0056b3",
+      color: "white",
+      boxShadow: "0 6px 20px rgba(0, 86, 179, 0.7)",
+    }
   },
   root: {
-    maxWidth: 345,
+    maxWidth: 450,
     flexGrow: 1,
+    borderRadius: "20px",
+    boxShadow: "0 8px 30px rgba(0, 123, 255, 0.3)",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+  },
+  uploadCard: {
+    maxWidth: 450,
+    flexGrow: 1,
+    borderRadius: "20px",
+    border: "2px dashed #007bff",
+    boxShadow: "0 4px 15px rgba(0, 123, 255, 0.1)",
+    backgroundColor: "white",
   },
   media: {
     height: 400,
+    borderRadius: "20px 20px 0 0",
+    objectFit: "contain",
+    maxWidth: "100%",
+    maxHeight: "400px",
   },
   paper: {
     padding: theme.spacing(2),
@@ -50,93 +70,87 @@ const useStyles = makeStyles((theme) => ({
     maxWidth: 500,
   },
   gridContainer: {
-    justifycontent: "center",
-    padding: "4em 1em 0 1em",
+    justifyContent: "center",
+    padding: "3em 1em 0 1em",
   },
   mainContainer: {
-    backgroundImage: `url(${Image})`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'center',
-    backgroundSize: 'cover',
-    height: "93vh",
+    background: 'linear-gradient(135deg, #e3f2fd 0%, #f8f9ff 100%)',
+    minHeight: "100vh",
     marginTop: "8px",
-  },
-  ImageCard: {
-    margin: "auto",
-    maxWidth: 400,
-    height: 500,
-    backgroundColor: 'transparent',
-    boxShadow: '0px 9px 70px 0px rgb(0 0 0 / 30%) !important',
-    borderRadius: '15px',
-  },
-  ImageCardEmpty: {
-    height: 'auto',
-  },
-  noImage: {
-    margin: "auto",
-    width: 400,
-    height: "400 !important",
-  },
-  input: {
-    display: 'none',
-  },
-  uploadIcon: {
-    background: 'white',
-  },
-  tableContainer: {
-    backgroundColor: 'transparent !important',
-    boxShadow: 'none !important',
-  },
-  table: {
-    backgroundColor: 'transparent !important',
-  },
-  tableHead: {
-    backgroundColor: 'transparent !important',
-  },
-  tableRow: {
-    backgroundColor: 'transparent !important',
-  },
-  tableCell: {
-    fontSize: '22px',
-    backgroundColor: 'transparent !important',
-    borderColor: 'transparent !important',
-    color: '#000000a6 !important',
-    fontWeight: 'bolder',
-    padding: '1px 24px 1px 16px',
-  },
-  tableCell1: {
-    fontSize: '14px',
-    backgroundColor: 'transparent !important',
-    borderColor: 'transparent !important',
-    color: '#000000a6 !important',
-    fontWeight: 'bolder',
-    padding: '1px 24px 1px 16px',
-  },
-  tableBody: {
-    backgroundColor: 'transparent !important',
-  },
-  text: {
-    color: 'white !important',
-    textAlign: 'center',
-  },
-  buttonGrid: {
-    maxWidth: "416px",
+    padding: "2rem 1rem",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
     width: "100%",
   },
-  detail: {
-    backgroundColor: 'white',
-    display: 'flex',
-    justifycontent: 'center',
-    flexDirection: 'column',
-    alignItems: 'center',
+  uploadSection: {
+    backgroundColor: "white",
+    borderRadius: "20px",
+    padding: "2rem",
+    maxWidth: 500,
+    minHeight: "400px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    textAlign: "center",
+    border: "2px dashed #007bff",
+    boxShadow: "0 4px 15px rgba(0, 123, 255, 0.1)",
+    gap: "1rem",
+  },
+  uploadTitle: {
+    fontSize: "1.3rem",
+    fontWeight: "bold",
+    color: "#0056b3",
+    marginBottom: "1rem",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.5rem",
+  },
+  uploadIcon: {
+    fontSize: "2rem",
+    color: "#17a2b8",
+  },
+  resultSection: {
+    marginTop: "2rem",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: "20px",
+    padding: "1rem 2rem",
+    boxShadow: "0 4px 20px rgba(0, 123, 255, 0.3)",
+    maxWidth: 450,
+    width: "100%",
   },
   appbar: {
-    background: 'purple',
+    background: '#007bff',
     boxShadow: 'none',
-    color: 'white'
+    color: 'white',
   },
   loader: {
-    color: '#be6a77 !important',
+    color: '#17a2b8 !important',
+  },
+  headerText: {
+    fontSize: "2.5rem",
+    fontWeight: "900",
+    color: "#0056b3",
+    marginBottom: "0.5rem",
+    textAlign: "center",
+  },
+  subHeaderText: {
+    fontSize: "1.2rem",
+    color: "#007bff",
+    marginBottom: "2rem",
+    textAlign: "center",
+  },
+  uploadText: {
+    fontSize: "1.5rem",
+    fontWeight: 700,
+    color: "#007bff",
+    marginBottom: "1rem",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.5rem",
   }
 }));
 
@@ -155,22 +169,18 @@ export const ImageUpload = () => {
       try {
         let formData = new FormData();
         formData.append("file", selectedFile);
-        console.log("Before API request");
         let res = await axios({
           method: "post",
           url: process.env.REACT_APP_API_URL,
           data: formData,
         });
-        console.log("After API request");
   
         if (res.status === 200) {
           setData(res.data);
         } else {
-          // Handle other status codes here
           console.error(`API request failed with status code: ${res.status}`);
         }
       } catch (error) {
-        // Handle request error (e.g., network error, server not running)
         console.error("API request failed:", error);
       } finally {
         setIsloading(false);
@@ -223,76 +233,95 @@ export const ImageUpload = () => {
       <AppBar position="static" className={classes.appbar}>
         <Toolbar>
           <Typography className={classes.title} variant="h6" noWrap>
-            CSE499: Lukemia Blood cell Cancer Classification
+            CSE499: Leukemia Blood Cell Cancer Classification
           </Typography>
           <div className={classes.grow} />
-          <Avatar src={cblogo}></Avatar>
+          <Avatar src={cblogo} />
         </Toolbar>
       </AppBar>
       <Container maxWidth={false} className={classes.mainContainer} disableGutters={true}>
-        <Grid
-          className={classes.gridContainer}
-          container
-          direction="row"
-          justifycontent="center"
-          alignItems="center"
-          spacing={2}
-        >
-          <Grid item xs={12}>
-            <Card className={`${classes.ImageCard} ${!Image ? classes.ImageCardEmpty : ''}`}>
-              {Image && <CardActionArea>
-                <CardMedia
-                  className={classes.media}
-                  component="img" // Change to "img"
-                  src={preview} // Change to "src"
-                  title="Contemplative Reptile"
-                />
-              </CardActionArea>
-              }
-              {!Image && <CardContent className={classes.content}>
-                <DropzoneArea
-                  acceptedFiles={['image/*']}
-                  dropzoneText={"Drag-drop or Upload an image of Blood Cell to proceed"}
-                  onChange={onSelectFile}
-                />
-              </CardContent>}
-              {data && <CardContent className={classes.detail}>
-                <TableContainer component={Paper} className={classes.tableContainer}>
-                  <Table className={classes.table} size="small" aria-label="simple table">
-                    <TableHead className={classes.tableHead}>
-                      <TableRow className={classes.tableRow}>
-                        <TableCell className={classes.tableCell1}>Label:</TableCell>
-                        <TableCell align="right" className={classes.tableCell1}>Confidence:</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody className={classes.tableBody}>
-                      <TableRow className={classes.tableRow}>
-                        <TableCell component="th" scope="row" className={classes.tableCell}>
-                          {data.class}
-                        </TableCell>
-                        <TableCell align="right" className={classes.tableCell}>{confidence}%</TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </CardContent>}
-              {isLoading && <CardContent className={classes.detail}>
-                <CircularProgress color="secondary" className={classes.loader} />
-                <Typography className={classes.title} variant="h6" noWrap>
-                  Matching... Please Wait...
-                </Typography>
-              </CardContent>}
+        <Typography className={classes.headerText}>
+          Leukemia Blood Cell Cancer Detection
+        </Typography>
+        <Typography className={classes.subHeaderText}>
+          Upload an image of a blood cell to detect leukemia with high accuracy.
+        </Typography>
+        <Grid container spacing={4} justifyContent="center" alignItems="center">
+          <Grid item xs={12} style={{ display: "flex", justifyContent: "center" }}>
+            <Card className={Image ? classes.root : classes.uploadCard}>
+              {Image && (
+                <CardActionArea>
+                  <CardMedia
+                    className={classes.media}
+                    component="img"
+                    src={preview}
+                    title="Uploaded Blood Cell"
+                  />
+                </CardActionArea>
+              )}
+              {!Image && (
+                <CardContent className={classes.uploadSection}>
+                  <Typography className={classes.uploadText}>
+                    Upload Blood Cell Image for Leukemia Detection
+                  </Typography>
+                  <DropzoneArea
+                    acceptedFiles={['image/*']}
+                    dropzoneText="Drag & drop your blood cell image or click here to select."
+                    onChange={onSelectFile}
+                    showPreviews={false}
+                    filesLimit={1}
+                    maxFileSize={5000000}
+                    dropzoneClass={classes.dropzone}
+                    style={{ flex: 1, width: '100%', minHeight: '150px' }}
+                  />
+                </CardContent>
+              )}
+              {data && (
+                <CardContent className={classes.resultSection}>
+                  <TableContainer component={Paper} elevation={0}>
+                    <Table size="small" aria-label="result table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Label</TableCell>
+                          <TableCell align="right">Confidence</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>{data.class}</TableCell>
+                          <TableCell align="right">{confidence}%</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </CardContent>
+              )}
+              {isLoading && (
+                <CardContent className={classes.resultSection}>
+                  <CircularProgress color="secondary" className={classes.loader} />
+                  <Typography variant="h6" style={{ color: "#17a2b8", marginTop: "1rem", textAlign: "center" }}>
+                    Matching... Please Wait...
+                  </Typography>
+                </CardContent>
+              )}
             </Card>
           </Grid>
-          {data &&
-            <Grid item className={classes.buttonGrid} >
-
-              <ColorButton variant="contained" className={classes.clearButton} color="primary" component="span" size="large" onClick={clearData} startIcon={<Clear fontSize="large" />}>
+          {data && (
+            <Grid item xs={12} md={4} style={{ display: "flex", alignItems: "center" }}>
+              <ColorButton
+                variant="contained"
+                className={classes.clearButton}
+                color="primary"
+                size="large"
+                onClick={clearData}
+                startIcon={<Clear fontSize="large" />}
+              >
                 Clear
               </ColorButton>
-            </Grid>}
-        </Grid >
-      </Container >
-    </React.Fragment >
+            </Grid>
+          )}
+        </Grid>
+      </Container>
+    </React.Fragment>
   );
 };
