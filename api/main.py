@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL = tf.keras.models.load_model('../models/1')
+MODEL = tf.saved_model.load('../models/1')
 
 CLASS_NAMES = ['Benign', '[Malignant] Pre-B',
                '[Malignant] Pro-B', '[Malignant] early Pre-B']
@@ -40,7 +40,8 @@ async def predict(
     image = tf.image.resize(image, (264, 264))
     img_batch = np.expand_dims(image, 0)
 
-    predictions = MODEL.predict(img_batch)
+    infer = MODEL.signatures['serving_default']
+    predictions = infer(sequential_input=img_batch)['dense_1']
     predicted_class = CLASS_NAMES[np.argmax(predictions[0])]
     confidence = np.max(predictions[0])
     return {

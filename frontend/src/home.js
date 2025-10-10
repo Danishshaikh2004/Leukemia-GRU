@@ -43,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
     }
   },
   root: {
-    maxWidth: 450,
+    maxWidth: 600,
     flexGrow: 1,
     borderRadius: "20px",
     boxShadow: "0 8px 30px rgba(0, 123, 255, 0.3)",
@@ -116,10 +116,10 @@ const useStyles = makeStyles((theme) => ({
     marginTop: "2rem",
     backgroundColor: "rgba(255, 255, 255, 0.95)",
     borderRadius: "20px",
-    padding: "1rem 2rem",
+    padding: "1.5rem 2.5rem",
     boxShadow: "0 4px 20px rgba(0, 123, 255, 0.3)",
-    maxWidth: 450,
-    width: "100%",
+    maxWidth: 600,
+    minWidth: 450,
   },
   appbar: {
     background: '#007bff',
@@ -156,16 +156,18 @@ const useStyles = makeStyles((theme) => ({
 
 export const ImageUpload = () => {
   const classes = useStyles();
-  const [selectedFile, setSelectedFile] = useState();
-  const [preview, setPreview] = useState();
-  const [data, setData] = useState();
-  const [Image, setImage] = useState(false);
-  const [isLoading, setIsloading] = useState(false);
+const [selectedFile, setSelectedFile] = useState();
+const [preview, setPreview] = useState();
+const [data, setData] = useState();
+const [error, setError] = useState(null);
+const [Image, setImage] = useState(false);
+const [isLoading, setIsloading] = useState(false);
 
   let confidence = 0;
 
   const sendFile = useCallback(async () => {
     if (Image) {
+      setError(null);
       try {
         let formData = new FormData();
         formData.append("file", selectedFile);
@@ -178,18 +180,21 @@ export const ImageUpload = () => {
         if (res.status === 200) {
           setData(res.data);
         } else {
+          setError(`API request failed with status code: ${res.status}`);
           console.error(`API request failed with status code: ${res.status}`);
         }
       } catch (error) {
+        setError("Prediction failed. Please ensure the backend server is running and try again.");
         console.error("API request failed:", error);
       } finally {
         setIsloading(false);
       }
     }
-  }, [Image, selectedFile, setData, setIsloading]);
+  }, [Image, selectedFile, setData, setIsloading, setError]);
 
   const clearData = () => {
     setData(null);
+    setError(null);
     setImage(false);
     setSelectedFile(null);
     setPreview(null);
@@ -217,10 +222,12 @@ export const ImageUpload = () => {
       setSelectedFile(undefined);
       setImage(false);
       setData(undefined);
+      setError(null);
       return;
     }
     setSelectedFile(files[0]);
     setData(undefined);
+    setError(null);
     setImage(true);
   };
 
@@ -278,18 +285,26 @@ export const ImageUpload = () => {
               )}
               {data && (
                 <CardContent className={classes.resultSection}>
-                  <TableContainer component={Paper} elevation={0}>
-                    <Table size="small" aria-label="result table">
+                  <Typography variant="h6" style={{ textAlign: "center", marginBottom: "1rem", color: data.class === 'Benign' ? "#28a745" : "#dc3545", fontWeight: "bold" }}>
+                    {data.class === 'Benign' ? 'No leukemia detected.' : `Leukemia detected: ${data.class}`}
+                  </Typography>
+                  {selectedFile && (
+                    <Typography variant="body2" style={{ textAlign: "center", marginBottom: "1rem", color: "#6c757d" }}>
+                      Analyzed image: {selectedFile.name}
+                    </Typography>
+                  )}
+                  <TableContainer component={Paper} elevation={0} style={{ width: "100%", overflowX: "auto" }}>
+                    <Table size="medium" aria-label="result table">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Label</TableCell>
-                          <TableCell align="right">Confidence</TableCell>
+                          <TableCell style={{ padding: "12px 24px", fontWeight: "bold" }}>Label</TableCell>
+                          <TableCell align="right" style={{ padding: "12px 24px", fontWeight: "bold" }}>Confidence</TableCell>
                         </TableRow>
                       </TableHead>
                       <TableBody>
                         <TableRow>
-                          <TableCell>{data.class}</TableCell>
-                          <TableCell align="right">{confidence}%</TableCell>
+                          <TableCell style={{ padding: "12px 24px" }}>{data.class}</TableCell>
+                          <TableCell align="right" style={{ padding: "12px 24px" }}>{confidence}%</TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
@@ -301,6 +316,13 @@ export const ImageUpload = () => {
                   <CircularProgress color="secondary" className={classes.loader} />
                   <Typography variant="h6" style={{ color: "#17a2b8", marginTop: "1rem", textAlign: "center" }}>
                     Matching... Please Wait...
+                  </Typography>
+                </CardContent>
+              )}
+              {error && (
+                <CardContent className={classes.resultSection} style={{ backgroundColor: "#ffebee", color: "#c62828" }}>
+                  <Typography variant="body1" style={{ textAlign: "center" }}>
+                    Error: {error}
                   </Typography>
                 </CardContent>
               )}
