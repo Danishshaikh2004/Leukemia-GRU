@@ -1,10 +1,15 @@
-from fastapi import FastAPI, File, UploadFile
+from fastapi import FastAPI, File, UploadFile, Query, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import numpy as np
 from io import BytesIO
 from PIL import Image
 import tensorflow as tf
+import logging
+import os
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 app = FastAPI()
 
@@ -16,7 +21,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL = tf.saved_model.load('../models/1')
+# Load models
+models_dict = {}
+try:
+    models_dict["cnn"] = tf.saved_model.load('../models/1')
+except Exception as e:
+    logging.warning(f"Failed to load CNN model: {e}")
+    models_dict["cnn"] = None
+
+try:
+    if os.path.exists('../models/4'):
+        models_dict["gru"] = tf.saved_model.load('../models/4')
+        logging.info("GRU model loaded successfully")
+    else:
+        logging.warning("GRU model path does not exist")
+        models_dict["gru"] = None
+except Exception as e:
+    logging.warning(f"Failed to load GRU model: {e}")
+    models_dict["gru"] = None
 
 CLASS_NAMES = ['Benign', '[Malignant] Pre-B',
                '[Malignant] Pro-B', '[Malignant] early Pre-B']
@@ -34,19 +56,40 @@ def read_file_as_image(data) -> np.ndarray:
 
 @app.post("/predict")
 async def predict(
+    request: Request,
     file: UploadFile = File(...)
 ):
-    image = read_file_as_image(await file.read())
+    model_name = request.query_params.get('model', 'cnn')
+    print("Query params:", dict(request.query_params))
+    print("Model name:", model_name)
+    print("MODEL in dict:", models_dict.get(model_name))
+    if model_name not in models_dict or models_dict[model_name] is None:
+        print("Raising 400")
+        raise HTTPException(status_code=400, detail="Invalid or unavailable model")
+    MODEL = models_dict[model_name]
+    print("MODEL assigned:", MODEL)
+
+    data = await file.read()
+    print("Data length:", len(data))
+    image = read_file_as_image(data)
     image = tf.image.resize(image, (264, 264))
     img_batch = np.expand_dims(image, 0)
+    img_batch = tf.cast(img_batch, tf.float32) / 255.0  # Normalize to match training
 
     infer = MODEL.signatures['serving_default']
-    predictions = infer(sequential_input=img_batch)['dense_1']
+    if model_name == 'cnn':
+        predictions = infer(sequential_input=img_batch)['dense_1']
+    else:
+        predictions = infer(inputs=img_batch)['output_0']
     predicted_class = CLASS_NAMES[np.argmax(predictions[0])]
     confidence = np.max(predictions[0])
+
+    logging.info(f"Prediction with {model_name}: {predicted_class}, confidence: {confidence}")
+
     return {
         'class': predicted_class,
         'confidence': float(confidence)
     }
+
 if __name__ == "__main__":
     uvicorn.run(app, host='localhost', port=8000)

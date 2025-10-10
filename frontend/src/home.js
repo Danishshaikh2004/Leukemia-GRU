@@ -8,8 +8,8 @@ import Container from "@material-ui/core/Container";
 import cblogo from "./cblogo.PNG";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
-import { Paper, CardActionArea, CardMedia, Grid, TableContainer, Table, TableBody, TableHead, TableRow, TableCell, Button, CircularProgress } from "@material-ui/core";
-import { Clear, CloudUpload } from '@material-ui/icons';
+import { Paper, CardActionArea, CardMedia, Grid, TableContainer, Table, TableBody, TableHead, TableRow, TableCell, Button, CircularProgress, Select, MenuItem, FormControl, InputLabel } from "@material-ui/core";
+import { Clear } from '@material-ui/icons';
 import axios from "axios";
 import { DropzoneArea } from 'material-ui-dropzone';
 
@@ -162,6 +162,7 @@ const [data, setData] = useState();
 const [error, setError] = useState(null);
 const [Image, setImage] = useState(false);
 const [isLoading, setIsloading] = useState(false);
+const [selectedModel, setSelectedModel] = useState("cnn");
 
   let confidence = 0;
 
@@ -173,10 +174,10 @@ const [isLoading, setIsloading] = useState(false);
         formData.append("file", selectedFile);
         let res = await axios({
           method: "post",
-          url: process.env.REACT_APP_API_URL,
+          url: `${process.env.REACT_APP_API_URL}?model=${selectedModel}`,
           data: formData,
         });
-  
+
         if (res.status === 200) {
           setData(res.data);
         } else {
@@ -190,7 +191,7 @@ const [isLoading, setIsloading] = useState(false);
         setIsloading(false);
       }
     }
-  }, [Image, selectedFile, setData, setIsloading, setError]);
+  }, [Image, selectedFile, selectedModel, setData, setIsloading, setError]);
 
   const clearData = () => {
     setData(null);
@@ -268,6 +269,13 @@ const [isLoading, setIsloading] = useState(false);
               )}
               {!Image && (
                 <CardContent className={classes.uploadSection}>
+                  <FormControl style={{minWidth: 120, marginBottom: '1rem'}}>
+                    <InputLabel>Model</InputLabel>
+                    <Select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
+                      <MenuItem value="cnn">CNN</MenuItem>
+                      <MenuItem value="gru">CNN + GRU</MenuItem>
+                    </Select>
+                  </FormControl>
                   <Typography className={classes.uploadText}>
                     Upload Blood Cell Image for Leukemia Detection
                   </Typography>
