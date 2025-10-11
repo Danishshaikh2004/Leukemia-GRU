@@ -23,21 +23,23 @@ app.add_middleware(
 
 # Load models
 models_dict = {}
+model_dir = os.path.join(os.path.dirname(__file__), '../models')
 try:
-    models_dict["cnn"] = tf.saved_model.load('../models/1')
+    models_dict["cnn"] = tf.saved_model.load(os.path.join(model_dir, '1'))
 except Exception as e:
     logging.warning(f"Failed to load CNN model: {e}")
     models_dict["cnn"] = None
 
 try:
-    if os.path.exists('../models/4'):
-        models_dict["gru"] = tf.saved_model.load('../models/4')
-        logging.info("GRU model loaded successfully")
+    gru_path = os.path.join(model_dir, '3')
+    if os.path.exists(gru_path):
+        models_dict["gru"] = tf.saved_model.load(gru_path)
+        logging.info("CNN+GRU model loaded successfully")
     else:
-        logging.warning("GRU model path does not exist")
+        logging.warning("CNN+GRU model path does not exist")
         models_dict["gru"] = None
 except Exception as e:
-    logging.warning(f"Failed to load GRU model: {e}")
+    logging.warning(f"Failed to load CNN+GRU model: {e}")
     models_dict["gru"] = None
 
 CLASS_NAMES = ['Benign', '[Malignant] Pre-B',
